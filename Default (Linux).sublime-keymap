@@ -1,0 +1,5 @@
+[
+  {
+    "keys": ["f8"], "command": "go_to_function"
+  }
+]
