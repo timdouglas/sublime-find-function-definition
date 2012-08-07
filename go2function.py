@@ -33,7 +33,7 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
       for dir in proj_folders:
         resp = self.doGrep(word, dir)
 
-        if resp != "":
+        if len(resp) > 0:
           self.openFileToDefinition(resp)
           break
 
@@ -45,7 +45,11 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
   #well, actually use the native python functions, not grep...
   def doGrep(self, word, directory):
     out = ()
-    lookup = "function "+str(word)
+
+    #search for normal functions and named anonymous functions
+    lookup1 = "function "+str(word)
+    lookup2 = str(word)+": function"
+    lookup3 = str(word)+":function"
 
     for r,d,f in os.walk(directory):
       #don't bother to look in git dirs
@@ -57,7 +61,7 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
           lines = search.readlines()
 
           for n, line in enumerate(lines):
-            if lookup in line:
+            if lookup1 in line or lookup2 in line or lookup3 in line:
               out = (fn, n)
               break
 
