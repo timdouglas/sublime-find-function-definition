@@ -39,17 +39,13 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
 
       #if not found show error (ie loop ends without a break)
       else:
+        print "[Go2Function] "+word+" not found"
         sublime.error_message("could not find function definition for "+word)
 
   #actually do the grep
   #well, actually use the native python functions, not grep...
   def doGrep(self, word, directory):
     out = ()
-
-    #search for normal functions and named anonymous functions
-    lookup1 = "function "+str(word)
-    lookup2 = str(word)+": function"
-    lookup3 = str(word)+":function"
 
     for r,d,f in os.walk(directory):
       #don't bother to look in git dirs
@@ -61,9 +57,10 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
           lines = search.readlines()
 
           for n, line in enumerate(lines):
-            if lookup1 in line or lookup2 in line or lookup3 in line:
-              out = (fn, n)
-              break
+            for find in self.getSearchTerms(word):
+              if find in line:
+                out = (fn, n)
+                break
 
           search.close()
 
@@ -74,6 +71,20 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
           break
 
     return out
+
+  def getSearchTerms(self, word):
+    wordstr = str(word)
+
+    #search for normal functions and named anonymous functions
+    lookup1 = "function "+wordstr
+    lookup2 = wordstr+": function"
+    lookup3 = wordstr+":function"
+    lookup4 = wordstr+" = function"
+    lookup5 = wordstr+"= function"
+    lookup6 = wordstr+"=function"
+
+    return (lookup1, lookup2, lookup3, lookup4, lookup5, lookup6)
+
 
   #open the file and scroll to the definition
   def openFileToDefinition(self, response):
