@@ -26,12 +26,13 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
     #get folders to search
     window = sublime.active_window()
     proj_folders = window.folders()
+    nodir = self.getExcludedDirs(view)
 
     if word != "":
       print "[Go2Function] Searching for 'function "+word+"'..."
 
       for dir in proj_folders:
-        resp = self.doGrep(word, dir)
+        resp = self.doGrep(word, dir, nodir)
 
         if len(resp) > 0:
           self.openFileToDefinition(resp)
@@ -44,20 +45,19 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
 
   #actually do the grep
   #well, actually use the native python functions, not grep...
-  def doGrep(self, word, directory):
+  def doGrep(self, word, directory, nodir):
     out = ()
+    terms = self.getSearchTerms(word)
 
     for r,d,f in os.walk(directory):
-      #don't bother to look in git dirs
-      if ".git" not in r:
-
+      if self.canCheckDir(r, nodir):
         for files in f:
           fn = os.path.join(r, files)
           search = open(fn, "r")
           lines = search.readlines()
 
           for n, line in enumerate(lines):
-            for find in self.getSearchTerms(word):
+            for find in terms:
               if find in line:
                 out = (fn, n)
                 break
@@ -79,11 +79,31 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
     lookup1 = "function "+wordstr
     lookup2 = wordstr+": function"
     lookup3 = wordstr+":function"
-    lookup4 = wordstr+" = function"
-    lookup5 = wordstr+"= function"
-    lookup6 = wordstr+"=function"
+    lookup4 = wordstr+" :function"
+    lookup5 = wordstr+" = function"
+    lookup6 = wordstr+"= function"
+    lookup7 = wordstr+"=function"
+    lookup8 = wordstr+" =function"
 
-    return (lookup1, lookup2, lookup3, lookup4, lookup5, lookup6)
+    return (lookup1, lookup2, lookup3, lookup4, lookup5, lookup6, lookup7, lookup8)
+
+  def getExcludedDirs(self, view):
+    #this gets the folder_exclude_patterns from the settings file, not the project file
+    dirs = view.settings().get("folder_exclude_patterns", [".git", ".svn", "CVS", ".hg"]) #some defaults
+    return dirs
+
+  def canCheckDir(self, dir, excludes):
+    count = 0
+
+    #potentially quite expensive - better way?
+    for no in excludes:
+      if no not in dir:
+        count = count + 1
+
+    if count == len(excludes):
+      return True
+    else:
+      return False
 
 
   #open the file and scroll to the definition
