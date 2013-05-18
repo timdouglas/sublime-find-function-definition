@@ -53,10 +53,8 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
         window.show_quick_panel(paths, lambda i: self.selectFile(i))
 
   def selectFile(self, index):
-    print "selected"
-    print "index "+str(index)
-    print self.files[index]
-    self.openFileToDefinition(self.files[index])
+    if index > -1 and len(self.files) < index:
+      self.openFileToDefinition(self.files[index])
 
   #actually do the search
   def doGrep(self, word, directory, nodir):
