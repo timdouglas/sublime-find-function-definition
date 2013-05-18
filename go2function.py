@@ -140,6 +140,3 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
       lambda: not new_view.is_loading(), 
       lambda: new_view.set_viewport_position(new_view.text_to_layout(new_view.text_point(line, 0)))
     )
-
-  def test(self):
-    return True
