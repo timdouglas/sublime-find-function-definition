@@ -1,12 +1,8 @@
 /*
  * go2function default settings
  *
- * ******** IMPORTANT ********
  *
- * DO NOT modify this file,
- * Copy the content to user settings
- * via "Preferences" -> "Package Settings" -> "go2function" -> "Settings - User".
- *
+ * To set your own function patterns, do so in a Users settings file.
  */
 
 {
