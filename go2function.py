@@ -66,16 +66,17 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
       if self.canCheckDir(r, nodir):
         for files in f:
           fn = os.path.join(r, files)
-          search = open(fn, "r")
-          lines = search.readlines()
+          if self.canCheckFile(fn):
+            search = open(fn, "r")
+            lines = search.readlines()
 
-          for n, line in enumerate(lines):
-            for find in self.getSearchTerms(word):
-              if find in line:
-                out = (fn, n)
-                break
+            for n, line in enumerate(lines):
+              for find in self.getSearchTerms(word):
+                if find in line:
+                  out = (fn, n)
+                  break
 
-          search.close()
+            search.close()
 
     return out
 
@@ -108,6 +109,24 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
     else:
       return False
 
+  def canCheckFile(self, filename):
+    patterns = self.view.settings().get("file_exclude_patterns")
+
+    if not patterns:
+      return True
+
+    res = True
+
+    for pattern in patterns:
+      pattern = re.sub('\*\.', '.*\.', pattern)
+      
+      if(re.match(str(pattern)+'$', filename)):
+        res = False
+        break
+
+    return res
+
+
   #open the file and scroll to the definition
   def openFileToDefinition(self, response):
     file, line = response
@@ -123,3 +142,6 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
       lambda: not new_view.is_loading(), 
       lambda: new_view.set_viewport_position(new_view.text_to_layout(new_view.text_point(line, 0)))
     )
+
+  def test(self):
+    return True
