@@ -1,0 +1,23 @@
+/*
+ * go2function default settings
+ *
+ * ******** IMPORTANT ********
+ *
+ * DO NOT modify this file,
+ * Copy the content to user settings
+ * via "Preferences" -> "Package Settings" -> "go2function" -> "Settings - User".
+ *
+ */
+
+{
+  "definitions":
+  [
+    "function $NAME$",
+    "$NAME$: function",
+    "$NAME$:function",
+    "$NAME$ = function",
+    "$NAME$= function",
+    "$NAME$=function",
+    "def $NAME$("
+  ]
+}
