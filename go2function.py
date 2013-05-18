@@ -116,9 +116,10 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
     res = True
 
     for pattern in patterns:
-      pattern = re.sub('\*\.', '.*\.', pattern)
+      pattern = re.sub('\*\.', '.', pattern)
+      pattern = re.escape(str(pattern))
       
-      if(re.match(str(pattern)+'$', filename)):
+      if(re.match('.*'+str(pattern)+'$', filename)):
         res = False
         break
 
