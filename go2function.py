@@ -14,6 +14,8 @@ def do_when(conditional, callback, *args, **kwargs):
 #Gets current word and performs a grep on project folders
 #to see if it has a function definition or not
 class GoToFunctionCommand(sublime_plugin.TextCommand):
+  files = []
+
   def run(self, text):
     view = self.view
 
@@ -29,28 +31,39 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
 
     if word != "":
       print "[Go2Function] Searching for 'function "+word+"'..."
+      files = []
 
       for dir in proj_folders:
-        resp = self.doGrep(word, dir)
-
+        resp = self.doGrep(word, dir, self.getExcludedDirs(view))
         if len(resp) > 0:
-          self.openFileToDefinition(resp)
-          break
+          files.append(resp)
 
-      #if not found show error (ie loop ends without a break)
-      else:
+      if len(files) == 0:
         print "[Go2Function] "+word+" not found"
         sublime.error_message("could not find function definition for "+word)
+      elif len(files) == 1:
+        self.openFileToDefinition(files[0])
+      else:
+        self.files = files
+        paths = []
 
-  #actually do the grep
-  #well, actually use the native python functions, not grep...
-  def doGrep(self, word, directory):
+        for path,line in files:
+          paths.append(path+":"+str(line))
+
+        window.show_quick_panel(paths, lambda i: self.selectFile(i))
+
+  def selectFile(self, index):
+    print "selected"
+    print "index "+str(index)
+    print self.files[index]
+    self.openFileToDefinition(self.files[index])
+
+  #actually do the search
+  def doGrep(self, word, directory, nodir):
     out = ()
 
     for r,d,f in os.walk(directory):
-      #don't bother to look in git dirs
-      if ".git" not in r:
-
+      if self.canCheckDir(r, nodir):
         for files in f:
           fn = os.path.join(r, files)
           search = open(fn, "r")
@@ -63,12 +76,6 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
                 break
 
           search.close()
-
-          if len(out) > 0:
-            break
-
-        if len(out) > 0:
-          break
 
     return out
 
@@ -83,6 +90,23 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
 
     return lookup
 
+  def getExcludedDirs(self, view):
+    #this gets the folder_exclude_patterns from the settings file, not the project file
+    dirs = view.settings().get("folder_exclude_patterns", [".git", ".svn", "CVS", ".hg"]) #some defaults
+    return dirs
+
+  def canCheckDir(self, dir, excludes):
+    count = 0
+
+    #potentially quite expensive - better way?
+    for no in excludes:
+      if no not in dir:
+        count = count + 1
+
+    if count == len(excludes):
+      return True
+    else:
+      return False
 
   #open the file and scroll to the definition
   def openFileToDefinition(self, response):
