@@ -139,5 +139,14 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
 
     do_when(
       lambda: not new_view.is_loading(), 
-      lambda: new_view.set_viewport_position(new_view.text_to_layout(new_view.text_point(line, 0)))
+      lambda: self.cursorToPos(new_view, line)
     )
+
+  def cursorToPos(self, view, line):
+    pt = view.text_point(line, 0)
+
+    view.set_viewport_position(view.text_to_layout(pt))
+    view.sel().clear()
+    view.sel().add(sublime.Region(pt))
+
+    view.show(pt)
