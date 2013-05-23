@@ -59,17 +59,22 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
   #actually do the search
   def doGrep(self, word, directory, nodir):
     out = ()
+    search_terms = self.getSearchTerms(word)
 
     for r,d,f in os.walk(directory):
+      
       if self.canCheckDir(r, nodir):
         for files in f:
           fn = os.path.join(r, files)
-          if self.canCheckFile(fn):
+
+          if self.canCheckFile(fn): #a long list of patterns can slow this down...
             search = open(fn, "r")
             lines = search.readlines()
 
             for n, line in enumerate(lines):
-              for find in self.getSearchTerms(word):
+              
+              for find in search_terms:
+                
                 if find in line:
                   out = (fn, n)
                   break
@@ -108,11 +113,21 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
       return False
 
   def canCheckFile(self, filename):
-    patterns = self.view.settings().get("file_exclude_patterns")
+    #try different settings files:
 
+    #first: plugin settings
+    settings = sublime.load_settings("go2function.sublime-settings")
+    patterns = settings.get("file_exclude_patterns")
+
+    #second, sublime settings
+    if not patterns:
+      patterns = self.view.settings().get("file_exclude_patterns")
+
+    #third, give up if none
     if not patterns:
       return True
 
+    #run regex on patterns
     res = True
 
     for pattern in patterns:
@@ -132,8 +147,6 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
 
     print "[Go2Function] Opening file "+file+" to line "+str(line)
     
-    line = line - 1
-
     window = sublime.active_window()
     new_view = window.open_file(file)
 
@@ -142,10 +155,15 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
       lambda: self.cursorToPos(new_view, line)
     )
 
+  #move cursor to the definition too
   def cursorToPos(self, view, line):
-    pt = view.text_point(line, 0)
+    nav_line = line - 1
+    nav_pt = view.text_point(nav_line, 0)
+    fn_line = line
+    pt = view.text_point(fn_line, 0)
 
-    view.set_viewport_position(view.text_to_layout(pt))
+    view.set_viewport_position(view.text_to_layout(nav_pt))
+
     view.sel().clear()
     view.sel().add(sublime.Region(pt))
 

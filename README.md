@@ -14,7 +14,7 @@ The following function definition patterns are used by default, but you can add 
 
 ```
 {
-  "definitions":
+  "definitions": /* where $NAME$ is the name of the function */
   [
     "function $NAME$",
     "$NAME$: function",
@@ -23,8 +23,7 @@ The following function definition patterns are used by default, but you can add 
     "$NAME$= function",
     "$NAME$=function",
     "def $NAME$("
-  ]
+  ],
+  "file_exclude_patterns": [] /* optional list of files to exclude, falls back to global setting if not set */
 }
 ```
-
-where `$NAME$` is the name of the function
