@@ -15,6 +15,8 @@ def do_when(conditional, callback, *args, **kwargs):
 #to see if it has a function definition or not
 class GoToFunctionCommand(sublime_plugin.TextCommand):
   files = []
+  excludedFiles = None
+  excludedDirs = None
 
   def run(self, text):
     view = self.view
@@ -96,8 +98,39 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
 
   def getExcludedDirs(self, view):
     #this gets the folder_exclude_patterns from the settings file, not the project file
-    dirs = view.settings().get("folder_exclude_patterns", [".git", ".svn", "CVS", ".hg"]) #some defaults
-    return dirs
+    if self.excludedDirs:
+      return self.excludedDirs
+    else:
+      dirs = view.settings().get("folder_exclude_patterns", [".git", ".svn", "CVS", ".hg"]) #some defaults
+      self.excludedDirs = dirs
+      return dirs
+
+  def getExcludedFiles(self):
+    if self.excludedFiles:
+      return self.excludedFiles
+    else:
+      #check plugin settings, then global
+      settings = sublime.load_settings("go2function.sublime-settings")
+      patterns = settings.get("file_exclude_patterns", self.view.settings().get("file_exclude_patterns"))
+
+      #no file_exclude rules
+      if not patterns:
+        return None
+
+      #merge patterns into single regex
+      rpatterns = []
+
+      for pattern in patterns:
+        pattern = re.sub('\*\.', '.', pattern)
+        pattern = re.escape(str(pattern))
+        rpatterns.append(pattern)
+
+      combined = "(" + ")|(".join(rpatterns) + ")"
+
+      #store regex
+      self.excludedFiles = combined
+
+      return combined
 
   def canCheckDir(self, dir, excludes):
     count = 0
@@ -113,33 +146,15 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
       return False
 
   def canCheckFile(self, filename):
-    #try different settings files:
+    patterns = self.getExcludedFiles()
 
-    #first: plugin settings
-    settings = sublime.load_settings("go2function.sublime-settings")
-    patterns = settings.get("file_exclude_patterns")
-
-    #second, sublime settings
-    if not patterns:
-      patterns = self.view.settings().get("file_exclude_patterns")
-
-    #third, give up if none
     if not patterns:
       return True
 
-    #run regex on patterns
-    res = True
+    if(re.match(patterns, filename)):
+      return False
 
-    for pattern in patterns:
-      pattern = re.sub('\*\.', '.', pattern)
-      pattern = re.escape(str(pattern))
-      
-      if(re.match('.*'+str(pattern)+'$', filename)):
-        res = False
-        break
-
-    return res
-
+    return True
 
   #open the file and scroll to the definition
   def openFileToDefinition(self, response):
