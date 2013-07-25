@@ -17,8 +17,12 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
   files = []
   excludedFiles = None
   excludedDirs = None
+  settings = None
 
   def run(self, text):
+    self.settings = sublime.load_settings("go2function.sublime-settings")
+    self.excludedDirs = self.settings.get("folder_exclude_patterns")
+    # sublime.message_dialog(str(self.excludedDirs))
     view = self.view
 
     #get current word
@@ -62,7 +66,7 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
   def doGrep(self, word, directory, nodir):
     out = ()
     search_terms = self.getSearchTerms(word)
-
+    # sublime.message_dialog(str(self.excludedDirs))
     for r,d,f in os.walk(directory):
       
       if self.canCheckDir(r, nodir):
@@ -87,8 +91,7 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
 
   def getSearchTerms(self, word):
     wordstr = str(word)
-    settings = sublime.load_settings("go2function.sublime-settings")
-    definitions = settings.get("definitions")
+    definitions = self.settings.get("definitions")
     lookup = []
 
     for func in definitions:
@@ -110,8 +113,7 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
       return self.excludedFiles
     else:
       #check plugin settings, then global
-      settings = sublime.load_settings("go2function.sublime-settings")
-      patterns = settings.get("file_exclude_patterns", self.view.settings().get("file_exclude_patterns"))
+      patterns = self.settings.get("file_exclude_patterns", self.view.settings().get("file_exclude_patterns"))
 
       #no file_exclude rules
       if not patterns:
@@ -133,17 +135,11 @@ class GoToFunctionCommand(sublime_plugin.TextCommand):
       return combined
 
   def canCheckDir(self, dir, excludes):
-    count = 0
+    for exclude in excludes:
+      if exclude in dir:
+        return False
 
-    #potentially quite expensive - better way?
-    for no in excludes:
-      if no not in dir:
-        count = count + 1
-
-    if count == len(excludes):
-      return True
-    else:
-      return False
+    return True
 
   def canCheckFile(self, filename):
     patterns = self.getExcludedFiles()
