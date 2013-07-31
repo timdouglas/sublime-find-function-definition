@@ -2,6 +2,11 @@
 
 Sublime Text 2 plugin to find and open a function's declaration in your project
 
+##Installation
+
+1. Click Preferences -> Browse Packages
+2. Download the source code folder and paste into the packages folder
+
 ## Usage
 
 Highlight a function and either hit F8 or right click and go to `Find Function Definition`.  Plugin will search your project for the function and open a file up to it, or if multiple instances found display a list of files to open.
