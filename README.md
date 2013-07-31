@@ -4,8 +4,18 @@ Sublime Text 2 plugin to find and open a function's declaration in your project
 
 ##Installation
 
+### The easy way...
+
+1. Just use [Package Control](https://github.com/wbond/package_control_channel) to install it
+ 
+### The slightly less (but still fairly) easy way...
+
 1. Click Preferences -> Browse Packages
 2. Download the source code folder and paste into the packages folder
+ 
+### The slightly geeky way...
+
+1. `git clone` this repo into your sublime packages directory
 
 ## Usage
 
